@@ -1,4 +1,4 @@
-import { User, Sparkles } from "lucide-react";
+import { User, Sparkles, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
@@ -12,31 +12,33 @@ export const ChatMessage = ({ role, content }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        "flex gap-3 animate-slide-up",
+        "flex gap-4 animate-slide-up group",
         isUser ? "flex-row-reverse" : "flex-row"
       )}
     >
       <div
         className={cn(
-          "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center",
-          isUser ? "bg-primary/20" : "bg-secondary"
+          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-transform group-hover:scale-110",
+          isUser
+            ? "bg-gradient-to-br from-primary to-purple-600 text-white"
+            : "bg-gradient-to-br from-emerald-400 to-cyan-500 text-white"
         )}
       >
         {isUser ? (
-          <User className="w-4 h-4 text-primary" />
+          <User className="w-4 h-4" />
         ) : (
-          <Sparkles className="w-4 h-4 text-primary" />
+          <Sparkles className="w-4 h-4" />
         )}
       </div>
       <div
         className={cn(
-          "max-w-[80%] rounded-2xl px-4 py-3",
+          "max-w-[85%] rounded-2xl px-5 py-3.5 shadow-sm",
           isUser
-            ? "bg-primary text-primary-foreground rounded-br-md"
-            : "glass-card rounded-bl-md"
+            ? "bg-gradient-to-br from-primary to-purple-600 text-white rounded-tr-sm"
+            : "bg-card border border-border/50 text-card-foreground rounded-tl-sm"
         )}
       >
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+        <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{content}</p>
       </div>
     </div>
   );
