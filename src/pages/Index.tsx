@@ -117,35 +117,55 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row pt-[72px]">
+    <div className="min-h-screen flex flex-col pt-[72px] bg-background">
       <Header />
-      {/* Sidebar with video */}
-      <div className="lg:w-[400px] xl:w-[480px] flex-shrink-0 p-4 lg:p-6 border-b lg:border-b-0 lg:border-r border-border">
-        <div className="space-y-4">
-          <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            New Video
-          </Button>
-          <VideoPreview url={videoUrl} />
-          <div className="glass-card p-4">
-            <p className="text-xs text-muted-foreground mb-1">Video ID</p>
-            <p className="font-mono text-sm truncate">{videoId}</p>
+
+      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        {/* Sidebar with video */}
+        <aside className="w-full lg:w-[400px] xl:w-[450px] flex-shrink-0 border-b lg:border-b-0 lg:border-r border-border/50 bg-card/30 backdrop-blur-md overflow-y-auto">
+          <div className="p-4 lg:p-6 space-y-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              className="gap-2 hover:bg-primary/10 hover:text-primary transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              New Video
+            </Button>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10">
+                <VideoPreview url={videoUrl} />
+              </div>
+
+              <div className="glass-card p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Video ID</p>
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                </div>
+                <p className="font-mono text-xs truncate opacity-70">{videoId}</p>
+              </div>
+            </div>
           </div>
-        </div>
+        </aside>
 
         {/* Chat area */}
-        <div className="flex-1 flex flex-col min-h-0 lg:min-h-screen">
+        <section className="flex-1 flex flex-col min-h-0 bg-background/50 relative">
           <ChatInterface
             messages={messages}
             onSendMessage={handleSendMessage}
             isLoading={isChatLoading}
           />
-        </div>
-      </div>
-      <footer className="py-4 text-center border-t border-border/50">
-        <p className="text-sm text-muted-foreground">
+        </section>
+      </main>
+
+      <footer className="py-3 text-center border-t border-border/50 bg-card/30 backdrop-blur-md">
+        <p className="text-xs text-muted-foreground">
           Founder{" "}
-          <span className="font-semibold gradient-text">@Mohammed Nihal</span>
+          <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+            @Mohammed Nihal
+          </span>
         </p>
       </footer>
     </div>
