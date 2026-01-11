@@ -77,37 +77,53 @@ const Index = () => {
 
   if (!videoId) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <VideoInput onSubmit={handleVideoSubmit} isLoading={isProcessing} />
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 flex items-center justify-center p-6">
+          <VideoInput onSubmit={handleVideoSubmit} isLoading={isProcessing} />
+        </div>
+        <footer className="py-6 text-center border-t border-border/50">
+          <p className="text-sm text-muted-foreground animate-fade-in">
+            Founder{" "}
+            <span className="font-semibold gradient-text">@Mohammed Nihal</span>
+          </p>
+        </footer>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Sidebar with video */}
-      <div className="lg:w-[400px] xl:w-[480px] flex-shrink-0 p-4 lg:p-6 border-b lg:border-b-0 lg:border-r border-border">
-        <div className="space-y-4">
-          <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            New Video
-          </Button>
-          <VideoPreview url={videoUrl} />
-          <div className="glass-card p-4">
-            <p className="text-xs text-muted-foreground mb-1">Video ID</p>
-            <p className="font-mono text-sm truncate">{videoId}</p>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 flex flex-col lg:flex-row">
+        {/* Sidebar with video */}
+        <div className="lg:w-[400px] xl:w-[480px] flex-shrink-0 p-4 lg:p-6 border-b lg:border-b-0 lg:border-r border-border">
+          <div className="space-y-4">
+            <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              New Video
+            </Button>
+            <VideoPreview url={videoUrl} />
+            <div className="glass-card p-4">
+              <p className="text-xs text-muted-foreground mb-1">Video ID</p>
+              <p className="font-mono text-sm truncate">{videoId}</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Chat area */}
-      <div className="flex-1 flex flex-col min-h-0 lg:min-h-screen">
-        <ChatInterface
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          isLoading={isChatLoading}
-        />
+        {/* Chat area */}
+        <div className="flex-1 flex flex-col min-h-0 lg:min-h-screen">
+          <ChatInterface
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            isLoading={isChatLoading}
+          />
+        </div>
       </div>
+      <footer className="py-4 text-center border-t border-border/50">
+        <p className="text-sm text-muted-foreground">
+          Founder{" "}
+          <span className="font-semibold gradient-text">@Mohammed Nihal</span>
+        </p>
+      </footer>
     </div>
   );
 };
