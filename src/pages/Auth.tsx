@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const { login, signup } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -28,12 +30,15 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate login
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success("Welcome back!");
-    setIsLoading(false);
-    navigate("/");
+    try {
+      await login(loginEmail, loginPassword);
+      toast.success("Welcome back!");
+      navigate("/");
+    } catch (error) {
+      toast.error("Login failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -46,12 +51,15 @@ const Auth = () => {
     
     setIsLoading(true);
     
-    // Simulate signup
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success("Account created successfully!");
-    setIsLoading(false);
-    navigate("/");
+    try {
+      await signup(signupName, signupEmail, signupPassword);
+      toast.success("Account created successfully!");
+      navigate("/");
+    } catch (error) {
+      toast.error("Signup failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
