@@ -6,7 +6,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { VideoLibrary } from "@/components/VideoLibrary";
 import { MultiVideoToggle } from "@/components/MultiVideoToggle";
-import { processVideo, askEnhanced, getVideoList } from "@/lib/api";
+import { processVideo, getVideoList, askQuestion } from "@/lib/api";
 import { extractVideoId } from "@/lib/youtube";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -83,15 +83,29 @@ const Index = () => {
 
     try {
       // Use null for multi-video mode, specific videoId for single video
-      const targetVideoId = isMultiVideoMode ? null : videoId;
+      // const targetVideoId = isMultiVideoMode ? null : videoId;
 
-      const result = await askEnhanced(message, targetVideoId, 5, messages);
+      // Enhanced API Disabled (Coming Soon)
+      // const result = await askEnhanced(message, targetVideoId, 5, messages);
+
+      if (isMultiVideoMode) {
+        toast({
+          title: "Coming Soon",
+          description: "Multi-video chat is coming soon!",
+        });
+        setIsChatLoading(false);
+        return;
+      }
+
+      // Fallback to standard API
+      if (!videoId) return;
+      const result = await askQuestion(message, videoId, messages);
 
       if (result.success) {
         const aiMessage: Message = {
           role: "model",
           content: result.answer,
-          citations: result.citations
+          // citations: result.citations // Standard API doesn't return full citations yet
         };
         setMessages((prev) => [...prev, aiMessage]);
       }
@@ -214,6 +228,35 @@ const Index = () => {
         <div className="absolute inset-0 z-0">
           <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/10 blur-[120px] animate-pulse-soft" />
           <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 blur-[120px] animate-pulse-soft" style={{ animationDelay: "1s" }} />
+
+          {/* Animated Logo Background - Multiple instances for better coverage */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-[0.08]">
+            <img
+              src="/Explainify.png"
+              alt=""
+              className="w-[600px] h-[600px] object-contain animate-pulse-soft"
+            />
+          </div>
+
+          {/* Top right corner logo */}
+          <div className="absolute top-10 right-10 opacity-[0.06] rotate-12">
+            <img
+              src="/Explainify.png"
+              alt=""
+              className="w-32 h-32 object-contain animate-pulse-soft"
+              style={{ animationDelay: "0.5s" }}
+            />
+          </div>
+
+          {/* Bottom left corner logo */}
+          <div className="absolute bottom-10 left-10 opacity-[0.06] -rotate-12">
+            <img
+              src="/Explainify.png"
+              alt=""
+              className="w-32 h-32 object-contain animate-pulse-soft"
+              style={{ animationDelay: "1.5s" }}
+            />
+          </div>
         </div>
 
         <div className="relative z-10 w-full max-w-2xl space-y-8 text-center animate-fade-in">

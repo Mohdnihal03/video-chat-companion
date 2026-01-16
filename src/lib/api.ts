@@ -1,6 +1,6 @@
 import { EnhancedAnswerResponse, VideoMetadata, ChatMessage } from "./types";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 interface TranscriptResponse {
   success: boolean;
@@ -77,31 +77,31 @@ export const getTranscript = async (videoId: string): Promise<TranscriptResponse
  * @param chatHistory - Previous chat messages for context
  * @returns Enhanced answer with citations
  */
-export const askEnhanced = async (
-  question: string,
-  videoId: string | null = null,
-  nResults: number = 5,
-  chatHistory: ChatMessage[] = []
-): Promise<EnhancedAnswerResponse> => {
-  const response = await fetch(`${API_BASE}/ask/enhanced`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      question,
-      video_id: videoId,
-      n_results: nResults,
-      chat_history: chatHistory,
-    }),
-  });
+// export const askEnhanced = async (
+//   question: string,
+//   videoId: string | null = null,
+//   nResults: number = 5,
+//   chatHistory: ChatMessage[] = []
+// ): Promise<EnhancedAnswerResponse> => {
+//   const response = await fetch(`${API_BASE}/ask/enhanced`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       question,
+//       video_id: videoId,
+//       n_results: nResults,
+//       chat_history: chatHistory,
+//     }),
+//   });
 
-  if (!response.ok) {
-    throw new Error("Failed to get enhanced answer");
-  }
+//   if (!response.ok) {
+//     throw new Error("Failed to get enhanced answer");
+//   }
 
-  return response.json();
-};
+//   return response.json();
+// };
 
 /**
  * Get list of all processed videos

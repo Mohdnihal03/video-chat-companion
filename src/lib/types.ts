@@ -38,3 +38,27 @@ export interface ChatMessage {
     content: string;
     citations?: Citation[];
 }
+
+// Auth Types
+export interface User {
+    id: number;
+    email: string;
+    full_name: string;
+    created_at: string;
+}
+
+export interface AuthResponse {
+    access_token: string;
+    token_type: string;
+}
+
+export interface LoginCredentials {
+    email: string; // Used as username in form data
+    password: string;
+}
+
+export interface SignupCredentials {
+    email: string;
+    password: string;
+    full_name: string;
+}
