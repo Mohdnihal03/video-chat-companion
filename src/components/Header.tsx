@@ -1,8 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserMenu } from "@/components/UserMenu";
-import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
 
 export function Header() {
     const { isAuthenticated } = useAuth();
