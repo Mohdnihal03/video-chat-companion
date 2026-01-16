@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
+import { User } from "@/lib/types";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,15 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Camera, Mail, User, Save, ArrowLeft } from "lucide-react";
+import { Camera, Mail, User as UserIcon, Save, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, updateUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [name, setName] = useState(user?.name || "");
+
+  const [name, setName] = useState(user?.full_name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [avatar, setAvatar] = useState(user?.avatar || "");
   const [isLoading, setIsLoading] = useState(false);
@@ -27,7 +28,7 @@ const Profile = () => {
     return null;
   }
 
-  const initials = user?.name
+  const initials = user?.full_name
     ?.split(" ")
     .map((n) => n[0])
     .join("")
@@ -57,8 +58,8 @@ const Profile = () => {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      updateUser({ name, email, avatar });
+
+      updateUser({ full_name: name, email, avatar } as Partial<User>);
       toast.success("Profile updated successfully!");
     } catch (error) {
       toast.error("Failed to update profile");
@@ -70,7 +71,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      
+
       <main className="flex-1 pt-20 pb-8 px-4">
         <div className="max-w-2xl mx-auto">
           {/* Back Button */}
@@ -127,7 +128,7 @@ const Profile = () => {
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-foreground">Full Name</Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="name"
                         type="text"

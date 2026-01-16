@@ -10,6 +10,7 @@ interface AuthContextType {
     login: (credentials: LoginCredentials) => Promise<void>;
     signup: (data: SignupCredentials) => Promise<void>;
     logout: () => void;
+    updateUser: (updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,76 +22,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Initialize auth state
     useEffect(() => {
         const checkAuth = async () => {
-            const token = localStorage.getItem("accessToken");
-            if (!token) {
-                setIsLoading(false);
-                return;
-            }
-
-            try {
-                const userData = await authApi.getMe(token);
-                setUser(userData);
-            } catch (error) {
-                console.error("Auth check failed:", error);
-                localStorage.removeItem("accessToken");
-            } finally {
-                setIsLoading(false);
-            }
+            // ... existing code ...
         };
 
         checkAuth();
     }, []);
 
     const login = async (credentials: LoginCredentials) => {
-        try {
-            const response = await authApi.login(credentials);
-            localStorage.setItem("accessToken", response.access_token);
-
-            // Fetch user profile immediately after login
-            const userData = await authApi.getMe(response.access_token);
-            setUser(userData);
-
-            toast.success("Welcome back!", {
-                description: "You have successfully logged in.",
-            });
-        } catch (error) {
-            console.error("Login error:", error);
-            toast.error("Login failed", {
-                description: error instanceof Error ? error.message : "Please check your credentials",
-            });
-            throw error;
-        }
+        // ... existing code ...
     };
 
     const signup = async (data: SignupCredentials) => {
-        try {
-            await authApi.signup(data);
-            // Auto-login or just notify? Requirement says "Success toast". 
-            // Usually signup doesn't return token immediately in some APIs, but often it does. 
-            // The prompt description implies we might just notify or we might need to login.
-            // Since the prompt description for Signup endpoint doesn't explicitly say it returns a token (unlike Login),
-            // we'll assume we need to redirect to login or auto-login if possible. 
-            // However, usually flows redirect to login. Let's just notify for now.
-
-            toast.success("Account created successfully", {
-                description: "You can now log in with your credentials.",
-            });
-
-        } catch (error) {
-            console.error("Signup error:", error);
-            toast.error("Signup failed", {
-                description: error instanceof Error ? error.message : "Could not create account",
-            });
-            throw error;
-        }
+        // ... existing code ...
     };
 
     const logout = () => {
-        localStorage.removeItem("accessToken");
-        setUser(null);
-        toast.message("Logged out", {
-            description: "Come back soon!",
-        });
+        // ... existing code ...
+    };
+
+    const updateUser = (updates: Partial<User>) => {
+        if (user) {
+            setUser({ ...user, ...updates });
+        }
     };
 
     return (
@@ -102,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 login,
                 signup,
                 logout,
+                updateUser,
             }}
         >
             {children}

@@ -1,7 +1,7 @@
 import { LoginCredentials, SignupCredentials, AuthResponse, User } from "@/lib/types";
 
-// Base URL handling - assumes proxy or standard configurable base
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+// Base URL handling - use Vite proxy in development
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export const authApi = {
     async signup(data: SignupCredentials): Promise<AuthResponse> {
@@ -22,25 +22,32 @@ export const authApi = {
     },
 
     async login(credentials: LoginCredentials): Promise<AuthResponse> {
-        // IMPORTANT: specific requirement for application/x-www-form-urlencoded
-        const formData = new URLSearchParams();
-        formData.append("username", credentials.email); // Map email to username as required
-        formData.append("password", credentials.password);
+        try {
 
-        const response = await fetch(`${BASE_URL}/auth/login`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: formData,
-        });
+            // IMPORTANT: specific requirement for application/x-www-form-urlencoded
+            const formData = new URLSearchParams();
+            formData.append("username", credentials.email); // Map email to username as required
+            formData.append("password", credentials.password);
 
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: "Login failed" }));
-            throw new Error(error.message || "Login failed");
+            const response = await fetch(`${BASE_URL}/auth/login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: formData,
+            });
+
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ message: "Login failed" }));
+                throw new Error(error.message || "Login failed");
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error("Login API error:", error);
+            throw error;
         }
-
-        return response.json();
     },
 
     async getMe(token: string): Promise<User> {
