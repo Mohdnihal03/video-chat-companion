@@ -44,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = async (credentials: LoginCredentials) => {
         try {
             const response = await authApi.login(credentials);
+
             localStorage.setItem("accessToken", response.access_token);
 
             // Fetch user profile immediately after login

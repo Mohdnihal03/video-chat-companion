@@ -12,6 +12,18 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus } from "lucide-react";
 import { VideoMetadata, Citation } from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Message {
   role: "user" | "model";
@@ -29,6 +41,9 @@ const Index = () => {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Load video list on mount
   useEffect(() => {
@@ -47,6 +62,12 @@ const Index = () => {
   };
 
   const handleVideoSubmit = async (url: string) => {
+    // Check if user is authenticated before processing
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const result = await processVideo(url);
@@ -214,6 +235,24 @@ const Index = () => {
         <div className="absolute bottom-0 w-full z-20">
           <Footer />
         </div>
+
+        {/* Login Required Modal */}
+        <AlertDialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Sign In Required</AlertDialogTitle>
+              <AlertDialogDescription>
+                You need to be signed in to process videos. Please log in or create an account to continue.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => navigate("/auth")}>
+                Sign In
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
@@ -294,6 +333,24 @@ const Index = () => {
         <div className="absolute bottom-0 w-full z-20">
           <Footer />
         </div>
+
+        {/* Login Required Modal */}
+        <AlertDialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Sign In Required</AlertDialogTitle>
+              <AlertDialogDescription>
+                You need to be signed in to process videos. Please log in or create an account to continue.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => navigate("/auth")}>
+                Sign In
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
@@ -362,6 +419,24 @@ const Index = () => {
           </span>
         </p>
       </footer>
+
+      {/* Login Required Modal */}
+      <AlertDialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign In Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              You need to be signed in to process videos. Please log in or create an account to continue.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => navigate("/auth")}>
+              Sign In
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
