@@ -62,7 +62,7 @@ export function Toolbar({ currentTool, setTool, undo, redo, canUndo, canRedo, on
                                     <tool.icon className="w-4 h-4 md:w-5 md:h-5" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent side="bottom" className="bg-popover border-border text-popover-foreground hidden md:block">
+                            <TooltipContent side="bottom" className="bg-popover border-border text-popover-foreground">
                                 <p className="text-xs font-medium">
                                     {tool.label} <span className="text-muted-foreground ml-1">({tool.shortcut})</span>
                                 </p>

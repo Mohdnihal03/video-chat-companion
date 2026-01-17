@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { CanvasElement, StrokeStyle, FillStyle } from "@/lib/canvas-utils";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { AlignCenter, AlignLeft, AlignRight, BringToFront, SendToBack, Trash2, Copy, Layers, Group, Ungroup } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, BringToFront, SendToBack, Trash2, Copy, Layers, Group, Ungroup, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PropertiesPanelProps {
@@ -31,18 +32,24 @@ const fillStyles: { value: FillStyle, label: string }[] = [
 ];
 
 export function PropertiesPanel({ element, updateElement, deleteElement, duplicateElement, bringToFront, sendToBack, groupElements, ungroupElements, selectedCount, isGroupSelected }: PropertiesPanelProps) {
+    const [isExpanded, setIsExpanded] = useState(true);
+
     if (!element) return null;
 
     const isMultiple = selectedCount > 1;
 
     return (
-        <div className="fixed bottom-20 md:bottom-auto md:top-24 left-0 md:left-4 right-0 md:right-auto w-full md:w-72 bg-black/80 backdrop-blur-md border-t md:border border-white/10 shadow-2xl rounded-t-xl md:rounded-xl p-3 md:p-4 z-40 md:z-50 animate-slide-in-left overflow-y-auto max-h-[60vh] md:max-h-[80vh]">
+        <div className={`fixed top-20 md:top-24 left-0 md:left-4 right-0 md:right-auto w-full md:w-72 bg-black/80 backdrop-blur-md border-b md:border border-white/10 shadow-2xl rounded-b-xl md:rounded-xl p-3 md:p-4 z-40 md:z-50 animate-slide-in-left transition-all duration-300 ${isExpanded ? 'max-h-[35vh] md:max-h-[80vh] overflow-y-auto' : 'max-h-[50px] overflow-hidden'}`}>
             <div className="flex items-center justify-between mb-3 md:mb-4 border-b border-white/10 pb-2">
-                <h3 className="text-xs md:text-sm font-semibold text-white flex items-center gap-2">
-                    <Layers className="w-3 h-3 md:w-4 md:h-4 text-primary" />
-                    {selectedCount > 0 ? (isMultiple ? `${selectedCount} Selected` : 'Properties') : 'Defaults'}
-                </h3>
-                <div className="flex gap-1">
+                <div onClick={() => setIsExpanded(!isExpanded)} className="flex items-center gap-2 cursor-pointer flex-1">
+                    <h3 className="text-xs md:text-sm font-semibold text-white flex items-center gap-2">
+                        <Layers className="w-3 h-3 md:w-4 md:h-4 text-primary" />
+                        {selectedCount > 0 ? (isMultiple ? `${selectedCount} Selected` : 'Properties') : 'Defaults'}
+                    </h3>
+                    {isExpanded ? <ChevronUp className="w-3 h-3 md:w-4 md:h-4 text-white/50" /> : <ChevronDown className="w-3 h-3 md:w-4 md:h-4 text-white/50" />}
+                </div>
+
+                <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                     {(isMultiple || isGroupSelected) && (
                         <>
                             {isMultiple && (
@@ -53,7 +60,7 @@ export function PropertiesPanel({ element, updateElement, deleteElement, duplica
 
                             {isGroupSelected && (
                                 <Button variant="ghost" size="icon" className="h-5 w-5 md:h-6 md:w-6 text-white/70 hover:text-white" onClick={ungroupElements} title="Ungroup (Ctrl+Shift+G)">
-                                    <Ungroup className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                    <Ungroup className="h-2.5 w-2.5 md:h-2.5" />
                                 </Button>
                             )}
                         </>
@@ -72,7 +79,7 @@ export function PropertiesPanel({ element, updateElement, deleteElement, duplica
                 </div>
             </div>
 
-            {element && (
+            {element && isExpanded && (
                 <div className="space-y-4 md:space-y-6">
                     {/* Colors */}
                     <div className="grid grid-cols-2 gap-2 md:gap-3">

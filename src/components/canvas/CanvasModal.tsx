@@ -3,8 +3,11 @@ import CanvasBoard from "@/components/canvas/CanvasBoard";
 import { Toolbar } from "@/components/canvas/Toolbar";
 import { PropertiesPanel } from "@/components/canvas/PropertiesPanel";
 import { CanvasElement, CanvasState, createElement, ElementType, exportToBlob } from "@/lib/canvas-utils";
-import { Download, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+} from "@/components/ui/dialog";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -15,14 +18,20 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { X } from "lucide-react";
 
 // Constants
 const HISTORY_LIMIT = 50;
 
-const Canvas = () => {
+interface CanvasModalProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}
+
+export const CanvasModal: React.FC<CanvasModalProps> = ({ open, onOpenChange }) => {
     // Canvas State
     const [elements, setElements] = useState<CanvasElement[]>(() => {
-        const saved = localStorage.getItem("canvas-elements");
+        const saved = localStorage.getItem("canvas-modal-elements");
         return saved ? JSON.parse(saved) : [];
     });
     const [appState, setAppState] = useState<CanvasState>({
@@ -84,10 +93,6 @@ const Canvas = () => {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // ... (rest of the file)
-
-
-
     // Initial History Setup
     useEffect(() => {
         if (historyIndex === 0 && history[0].length === 0 && elements.length > 0) {
@@ -97,7 +102,7 @@ const Canvas = () => {
 
     // Auto-save
     useEffect(() => {
-        localStorage.setItem("canvas-elements", JSON.stringify(elements));
+        localStorage.setItem("canvas-modal-elements", JSON.stringify(elements));
     }, [elements]);
 
     // Focus Text Area
@@ -158,8 +163,6 @@ const Canvas = () => {
             return elementsCopy;
         });
 
-        // Also update current style to match latest edit, so next shape uses these styles
-        // Filter out non-style properties
         const { x, y, width, height, type, id: _id, points, text, groupId, seed, angle, ...styleUpdates } = updates as any;
         if (Object.keys(styleUpdates).length > 0) {
             setCurrentStyle(prev => ({ ...prev, ...styleUpdates }));
@@ -174,8 +177,6 @@ const Canvas = () => {
     };
 
     const duplicateElement = (id: string) => {
-        // Duplicate ALL selected
-        // Logic: determine bounding box of selected, duplicate and shift right-down
         if (id === 'mult') {
             const newEls: CanvasElement[] = [];
             selectedElements.forEach(el => {
@@ -198,7 +199,6 @@ const Canvas = () => {
     };
 
     const bringToFront = (id: string) => {
-        // If multiple, bring all selected to front
         let itemsToMove = selectedElements;
         if (id !== 'mult') {
             const el = elements.find(el => el.id === id);
@@ -245,7 +245,6 @@ const Canvas = () => {
     };
 
     const ungroupElements = () => {
-        // Allow ungrouping if ANY of the selected items are in a group
         const groupIds = new Set(selectedElements.map(el => el.groupId).filter(Boolean));
         if (groupIds.size === 0) return;
 
@@ -257,7 +256,6 @@ const Canvas = () => {
             return el;
         });
         setElements(newElements);
-        // Maintain selection
         const ids = selectedElements.map(el => el.id);
         setSelectedElements(newElements.filter(el => ids.includes(el.id)));
         pushToHistory(newElements);
@@ -279,11 +277,10 @@ const Canvas = () => {
     };
 
     const handleMouseDown = (e: React.MouseEvent) => {
-        const { clientX, clientY } = getClientCoordinates(e); // Now relative to container
+        const { clientX, clientY } = getClientCoordinates(e);
 
-        if (editingElementId) return; // Ignore clicks if editing
+        if (editingElementId) return;
 
-        // Middle mouse or space+drag equivalent for panning
         if (e.button === 1) {
             setAction("panning");
             setPanStart({ x: clientX, y: clientY });
@@ -297,7 +294,6 @@ const Canvas = () => {
             const clickedElement = [...elements].reverse().find(el => {
                 const x = el.x;
                 const y = el.y;
-                // Normalize for hit test
                 const width = el.width;
                 const height = el.height;
                 const minX = Math.min(x, x + width);
@@ -316,7 +312,6 @@ const Canvas = () => {
                 let newSelection = [];
 
                 if (e.shiftKey) {
-                    // Toggle selection logic with groups
                     if (selectedElements.find(el => el.id === clickedElement.id)) {
                         const groupId = clickedElement.groupId;
                         if (groupId) {
@@ -325,12 +320,10 @@ const Canvas = () => {
                             newSelection = selectedElements.filter(el => el.id !== clickedElement.id);
                         }
                     } else {
-                        // Selecting: include group peers
                         const groupId = clickedElement.groupId;
                         if (groupId) {
                             const groupPeers = elements.filter(el => el.groupId === groupId);
                             const all = [...selectedElements, ...groupPeers];
-                            // De-duplicate by ID
                             const ids = new Set(all.map(x => x.id));
                             newSelection = Array.from(ids).map(id => all.find(x => x.id === id)!);
                         } else {
@@ -352,7 +345,6 @@ const Canvas = () => {
 
                 setSelectedElements(newSelection);
 
-                // Update current style to match selected element for continuity
                 if (newSelection.length > 0) {
                     const last = newSelection[newSelection.length - 1];
                     const { stroke, fill, strokeWidth, strokeStyle, fillStyle, roughness, opacity } = last;
@@ -371,8 +363,7 @@ const Canvas = () => {
             return;
         }
 
-        // Creation Tools
-        if (tool === "image") return; // Handled by upload
+        if (tool === "image") return;
 
         if (tool === "eraser" || tool === "laser") {
             setAction("drawing");
@@ -380,7 +371,6 @@ const Canvas = () => {
         }
 
         const id = crypto.randomUUID();
-        // Use currentStyle for new element
         const newElement = createElement(id, canvasX, canvasY, tool, currentStyle);
 
         if (tool === "pencil") {
@@ -417,10 +407,8 @@ const Canvas = () => {
             const dx = canvasX - moveStart.x;
             const dy = canvasY - moveStart.y;
 
-            // Move all selected elements
             const updatedElements = elements.map(el => {
                 if (selectedElements.some(sel => sel.id === el.id)) {
-                    // Determine new position
                     let newX = el.x + dx;
                     let newY = el.y + dy;
 
@@ -435,7 +423,6 @@ const Canvas = () => {
             });
 
             setElements(updatedElements);
-            // Since we updated elements, update selections with new coordinates too
             const updatedSelection = updatedElements.filter(el => selectedElements.some(sel => sel.id === el.id));
             setSelectedElements(updatedSelection);
 
@@ -497,7 +484,6 @@ const Canvas = () => {
     };
 
     const handleTouchStart = (e: React.TouchEvent) => {
-        // Handle Pinch Zoom Start
         if (e.touches.length === 2) {
             const touch1 = e.touches[0];
             const touch2 = e.touches[1];
@@ -524,7 +510,6 @@ const Canvas = () => {
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
-        // Handle Pinch Zoom Move
         if (e.touches.length === 2 && lastPinchDistance.current !== null) {
             const touch1 = e.touches[0];
             const touch2 = e.touches[1];
@@ -535,7 +520,7 @@ const Canvas = () => {
 
             setAppState(prev => ({ ...prev, scale: newScale }));
             lastPinchDistance.current = distance;
-            return; // Do not trigger mouse move (pan/draw) if zooming
+            return;
         }
 
         const touch = e.touches[0];
@@ -568,7 +553,7 @@ const Canvas = () => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "canvas-drawing.png";
+            a.download = "canvas-notes.png";
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -582,7 +567,7 @@ const Canvas = () => {
         setElements([]);
         setSelectedElements([]);
         pushToHistory([]);
-        localStorage.removeItem("canvas-elements");
+        localStorage.removeItem("canvas-modal-elements");
         setIsClearDialogOpen(false);
     };
 
@@ -593,17 +578,15 @@ const Canvas = () => {
             reader.onload = (event) => {
                 const src = event.target?.result as string;
                 const id = crypto.randomUUID();
-                // Center image
                 const x = (windowSize.width / 2 - appState.offsetX) / appState.scale - 100;
                 const y = (windowSize.height / 2 - appState.offsetY) / appState.scale - 100;
 
-                // Create image element
                 const newEl = createElement(id, x, y, "image", { width: 200, height: 200, src, stroke: "transparent", fill: "transparent" });
 
                 setElements(prev => [...prev, newEl]);
                 setSelectedElements([newEl]);
                 pushToHistory([...elements, newEl]);
-                setTool("selection"); // Switch to selection to move it
+                setTool("selection");
             };
             reader.readAsDataURL(file);
         }
@@ -611,10 +594,11 @@ const Canvas = () => {
 
     // Keyboard Shortcuts
     useEffect(() => {
+        if (!open) return; // Only active when modal is open
+
         const handleKeyDown = (e: KeyboardEvent) => {
             if (editingElementId) return;
 
-            // Tool Shortcuts
             if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
                 switch (e.key.toLowerCase()) {
                     case 'v': setTool('selection'); setSelectedElements([]); break;
@@ -647,155 +631,163 @@ const Canvas = () => {
                     setSelectedElements([]);
                     pushToHistory(newElements);
                 }
+            } else if (e.key === 'Escape') {
+                onOpenChange(false);
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [undo, redo, selectedElements, elements, editingElementId]);
+    }, [open, undo, redo, selectedElements, elements, editingElementId, onOpenChange]);
 
-    // Calculate if ungroup should be shown
     const isGroupSelected = selectedElements.length > 0 && selectedElements.some(el => el.groupId);
 
-    // Render
     return (
-        <div ref={canvasRef} className="h-[calc(100vh)] w-full relative overflow-hidden bg-background text-foreground touch-none" onWheel={handleWheel}>
-            {/* Background Gradient - Only visible in dark mode or subtle in light */}
-            <div className="absolute inset-0 pointer-events-none opacity-30 dark:opacity-100 transition-opacity duration-500">
-                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/10 dark:bg-purple-900/10 blur-[120px]" />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 dark:bg-blue-900/10 blur-[120px]" />
-            </div>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="w-full h-[100dvh] max-w-full max-h-[100dvh] md:max-w-[90vw] md:w-[90vw] md:h-[85vh] md:max-h-[85vh] p-0 gap-0 border-0 md:border">
+                <div ref={canvasRef} className="h-full w-full relative overflow-hidden bg-background text-foreground touch-none md:rounded-lg" onWheel={handleWheel}>
+                    {/* Background Gradient */}
+                    <div className="absolute inset-0 pointer-events-none opacity-30 dark:opacity-100 transition-opacity duration-500 rounded-lg">
+                        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/10 dark:bg-purple-900/10 blur-[120px]" />
+                        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 dark:bg-blue-900/10 blur-[120px]" />
+                    </div>
 
-            <Toolbar
-                currentTool={tool}
-                setTool={(t) => { setTool(t); setSelectedElements([]); }}
-                undo={undo}
-                redo={redo}
-                canUndo={historyIndex > 0}
-                canRedo={historyIndex < history.length - 1}
-                onExport={handleExport}
-                onClear={handleClear}
-                onImageUpload={handleImageUpload}
-            />
+                    {/* Close Button */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-4 right-4 z-50 hover:bg-destructive/20 rounded-full"
+                        onClick={() => onOpenChange(false)}
+                    >
+                        <X className="h-5 w-5" />
+                    </Button>
 
-            <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Clear Canvas?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your drawing and remove it from our servers.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmClear} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Clear Canvas
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                    <Toolbar
+                        currentTool={tool}
+                        setTool={(t) => { setTool(t); setSelectedElements([]); }}
+                        undo={undo}
+                        redo={redo}
+                        canUndo={historyIndex > 0}
+                        canRedo={historyIndex < history.length - 1}
+                        onExport={handleExport}
+                        onClear={handleClear}
+                        onImageUpload={handleImageUpload}
+                    />
 
-            <PropertiesPanel
-                element={selectedElements.length > 0 ? selectedElements[selectedElements.length - 1] : (currentStyle as CanvasElement)}
-                updateElement={(id, updates) => {
-                    if (selectedElements.length > 0) {
-                        const selectedIds = selectedElements.map(el => el.id);
-                        setElements(prev => prev.map(el =>
-                            selectedIds.includes(el.id) ? { ...el, ...updates } : el
-                        ));
-                        setSelectedElements(prev => prev.map(el => selectedIds.includes(el.id) ? { ...el, ...updates } : el));
+                    <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Clear Canvas?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your drawing.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={confirmClear} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                    Clear Canvas
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
 
-                        // Also update defaults for future shapes
-                        setCurrentStyle(prev => ({ ...prev, ...updates }));
-                    } else {
-                        // Just update defaults
-                        setCurrentStyle(prev => ({ ...prev, ...updates }));
-                    }
-                }}
-                deleteElement={(id) => deleteElement(selectedElements.length > 1 ? 'mult' : id)}
-                duplicateElement={(id) => duplicateElement(selectedElements.length > 1 ? 'mult' : id)}
-                bringToFront={(id) => bringToFront(selectedElements.length > 1 ? 'mult' : id)}
-                sendToBack={(id) => sendToBack(selectedElements.length > 1 ? 'mult' : id)}
-                groupElements={groupElements}
-                ungroupElements={ungroupElements}
-                selectedCount={selectedElements.length}
-                isGroupSelected={!!isGroupSelected}
-            />
-
-            {/* Text Input Overlay */}
-            {editingElementId && (() => {
-                const el = elements.find(e => e.id === editingElementId);
-                if (!el) return null;
-
-                const left = el.x * appState.scale + appState.offsetX;
-                const top = el.y * appState.scale + appState.offsetY;
-                const fontSize = (el.strokeWidth * 10 + 10) * appState.scale;
-
-                return (
-                    <textarea
-                        ref={textAreaRef}
-                        className="fixed bg-transparent border border-dashed border-primary outline-none resize-none overflow-hidden z-[100] p-0 m-0 leading-none shadow-none"
-                        style={{
-                            left: `${left}px`,
-                            top: `${top - fontSize * 0.1}px`,
-                            fontSize: `${fontSize}px`,
-                            fontFamily: "'Virgil', sans-serif",
-                            minWidth: "100px",
-                            minHeight: "1.5em",
-                            color: el.stroke,
-                            whiteSpace: "pre"
-                        }}
-                        defaultValue={el.text}
-                        onBlur={handleTextSubmit}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                e.currentTarget.blur();
+                    <PropertiesPanel
+                        element={selectedElements.length > 0 ? selectedElements[selectedElements.length - 1] : (currentStyle as CanvasElement)}
+                        updateElement={(id, updates) => {
+                            if (selectedElements.length > 0) {
+                                const selectedIds = selectedElements.map(el => el.id);
+                                setElements(prev => prev.map(el =>
+                                    selectedIds.includes(el.id) ? { ...el, ...updates } : el
+                                ));
+                                setSelectedElements(prev => prev.map(el => selectedIds.includes(el.id) ? { ...el, ...updates } : el));
+                                setCurrentStyle(prev => ({ ...prev, ...updates }));
+                            } else {
+                                setCurrentStyle(prev => ({ ...prev, ...updates }));
                             }
                         }}
+                        deleteElement={(id) => deleteElement(selectedElements.length > 1 ? 'mult' : id)}
+                        duplicateElement={(id) => duplicateElement(selectedElements.length > 1 ? 'mult' : id)}
+                        bringToFront={(id) => bringToFront(selectedElements.length > 1 ? 'mult' : id)}
+                        sendToBack={(id) => sendToBack(selectedElements.length > 1 ? 'mult' : id)}
+                        groupElements={groupElements}
+                        ungroupElements={ungroupElements}
+                        selectedCount={selectedElements.length}
+                        isGroupSelected={!!isGroupSelected}
                     />
-                );
-            })()}
 
-            <CanvasBoard
-                elements={elements}
-                appState={appState}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                width={windowSize.width}
-                height={windowSize.height}
-                laserPathRef={laserPathRef}
-            />
+                    {/* Text Input Overlay */}
+                    {editingElementId && (() => {
+                        const el = elements.find(e => e.id === editingElementId);
+                        if (!el) return null;
 
-            {/* Zoom Controls */}
-            {/* Zoom Controls */}
-            <div className="fixed bottom-24 right-4 md:bottom-6 md:right-6 flex items-center gap-2 bg-black/80 backdrop-blur border border-white/10 p-1.5 rounded-full z-50 shadow-xl">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-8 h-8 rounded-full hover:bg-white/10 text-white/70"
-                    onClick={() => setAppState(prev => ({ ...prev, scale: Math.max(prev.scale - 0.1, 0.1) }))}
-                >
-                    <span className="text-xl font-medium leading-none mb-1">−</span>
-                </Button>
-                <div className="w-12 text-center text-xs font-mono text-white/80 select-none">
-                    {Math.round(appState.scale * 100)}%
+                        const left = el.x * appState.scale + appState.offsetX;
+                        const top = el.y * appState.scale + appState.offsetY;
+                        const fontSize = (el.strokeWidth * 10 + 10) * appState.scale;
+
+                        return (
+                            <textarea
+                                ref={textAreaRef}
+                                className="fixed bg-transparent border border-dashed border-primary outline-none resize-none overflow-hidden z-[100] p-0 m-0 leading-none shadow-none"
+                                style={{
+                                    left: `${left}px`,
+                                    top: `${top - fontSize * 0.1}px`,
+                                    fontSize: `${fontSize}px`,
+                                    fontFamily: "'Virgil', sans-serif",
+                                    minWidth: "100px",
+                                    minHeight: "1.5em",
+                                    color: el.stroke,
+                                    whiteSpace: "pre"
+                                }}
+                                defaultValue={el.text}
+                                onBlur={handleTextSubmit}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        e.currentTarget.blur();
+                                    }
+                                }}
+                            />
+                        );
+                    })()}
+
+                    <CanvasBoard
+                        elements={elements}
+                        appState={appState}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        width={typeof window !== 'undefined' && window.innerWidth < 768 ? windowSize.width : windowSize.width * 0.9}
+                        height={typeof window !== 'undefined' && window.innerWidth < 768 ? windowSize.height : windowSize.height * 0.85}
+                        laserPathRef={laserPathRef}
+                    />
+
+                    {/* Zoom Controls */}
+                    <div className="absolute bottom-4 right-4 md:bottom-4 md:right-4 flex items-center gap-2 bg-black/80 backdrop-blur border border-white/10 p-1.5 rounded-full z-50 shadow-xl">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 rounded-full hover:bg-white/10 text-white/70"
+                            onClick={() => setAppState(prev => ({ ...prev, scale: Math.max(prev.scale - 0.1, 0.1) }))}
+                        >
+                            <span className="text-xl font-medium leading-none mb-1">−</span>
+                        </Button>
+                        <div className="w-12 text-center text-xs font-mono text-white/80 select-none">
+                            {Math.round(appState.scale * 100)}%
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 rounded-full hover:bg-white/10 text-white/70"
+                            onClick={() => setAppState(prev => ({ ...prev, scale: Math.min(prev.scale + 0.1, 10) }))}
+                        >
+                            <span className="text-xl font-medium leading-none mb-1">+</span>
+                        </Button>
+                    </div>
                 </div>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-8 h-8 rounded-full hover:bg-white/10 text-white/70"
-                    onClick={() => setAppState(prev => ({ ...prev, scale: Math.min(prev.scale + 0.1, 10) }))}
-                >
-                    <span className="text-xl font-medium leading-none mb-1">+</span>
-                </Button>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };
-
-export default Canvas;

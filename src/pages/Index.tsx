@@ -2,15 +2,15 @@ import { useState, useEffect } from "react";
 import { VideoInput } from "@/components/VideoInput";
 import { VideoPreview } from "@/components/VideoPreview";
 import { ChatInterface } from "@/components/ChatInterface";
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { VideoLibrary } from "@/components/VideoLibrary";
 import { MultiVideoToggle } from "@/components/MultiVideoToggle";
+import { CanvasModal } from "@/components/canvas/CanvasModal";
 import { processVideo, getVideoList, askQuestion } from "@/lib/api";
 import { extractVideoId } from "@/lib/youtube";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, PenTool } from "lucide-react";
 import { VideoMetadata, Citation } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -41,9 +41,10 @@ const Index = () => {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showCanvasModal, setShowCanvasModal] = useState(false);
 
   // Load video list on mount
   useEffect(() => {
@@ -188,14 +189,26 @@ const Index = () => {
     videoId,
     videosCount: videos.length,
     showVideoInput,
+    authLoading,
     shouldShowLibrary: !videoId && videos.length > 0 && !showVideoInput
   });
+
+  // Show loading state while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show video library if videos exist but no video is selected
   if (!videoId && videos.length > 0 && !showVideoInput) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-        <Header />
 
         {/* Background effects */}
         <div className="absolute inset-0 z-0">
@@ -261,7 +274,6 @@ const Index = () => {
   if (!videoId || showVideoInput) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-        <Header />
 
         {/* Background effects */}
         <div className="absolute inset-0 z-0">
@@ -360,7 +372,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col pt-[72px] bg-background">
-      <Header />
 
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Sidebar with video */}
@@ -397,6 +408,16 @@ const Index = () => {
                   videoCount={videos.length}
                 />
               )}
+
+              {/* Canvas Button */}
+              <Button
+                onClick={() => setShowCanvasModal(true)}
+                variant="outline"
+                className="w-full gap-2 hover:bg-primary/10 hover:text-primary hover:border-primary/50 transition-all"
+              >
+                <PenTool className="w-4 h-4" />
+                Open Canvas
+              </Button>
             </div>
           </div>
         </aside>
@@ -437,6 +458,9 @@ const Index = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Canvas Modal */}
+      <CanvasModal open={showCanvasModal} onOpenChange={setShowCanvasModal} />
     </div>
   );
 };

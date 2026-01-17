@@ -9,6 +9,9 @@ interface CanvasBoardProps {
     onMouseDown: (e: React.MouseEvent) => void;
     onMouseMove: (e: React.MouseEvent) => void;
     onMouseUp: (e: React.MouseEvent) => void;
+    onTouchStart?: (e: React.TouchEvent) => void;
+    onTouchMove?: (e: React.TouchEvent) => void;
+    onTouchEnd?: (e: React.TouchEvent) => void;
     width: number;
     height: number;
     laserPathRef?: React.MutableRefObject<{ x: number; y: number; time: number }[]>;
@@ -20,6 +23,9 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
     onMouseDown,
     onMouseMove,
     onMouseUp,
+    onTouchStart,
+    onTouchMove,
+    onTouchEnd,
     width,
     height,
     laserPathRef,
@@ -29,6 +35,7 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
 
     // Main Render Loop (Background + Elements)
     useLayoutEffect(() => {
+        // ... (lines 32-76)
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -77,6 +84,7 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
 
     // Overlay Render Loop (Laser)
     useLayoutEffect(() => {
+        // ... (lines 80-132)
         const canvas = overlayRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
@@ -149,6 +157,9 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
                 onMouseDown={onMouseDown}
                 onMouseMove={onMouseMove}
                 onMouseUp={onMouseUp}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
                 style={{ cursor: "crosshair" }}
             />
         </>

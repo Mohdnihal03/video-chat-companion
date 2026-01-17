@@ -22,22 +22,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Initialize auth state
     useEffect(() => {
         const checkAuth = async () => {
-            // ... existing code ...
+            const token = localStorage.getItem("token");
+            if (token) {
+                try {
+                    const userData = await authApi.getMe(token);
+                    setUser(userData);
+                } catch (error) {
+                    localStorage.removeItem("token");
+                }
+            }
+            setIsLoading(false);
         };
 
         checkAuth();
     }, []);
 
     const login = async (credentials: LoginCredentials) => {
-        // ... existing code ...
+        try {
+            const response = await authApi.login(credentials);
+            localStorage.setItem("token", response.access_token);
+            const userData = await authApi.getMe(response.access_token);
+            setUser(userData);
+            toast.success("Logged in successfully!");
+        } catch (error: any) {
+            toast.error(error.message || "Login failed");
+            throw error;
+        }
     };
 
     const signup = async (data: SignupCredentials) => {
-        // ... existing code ...
+        try {
+            const response = await authApi.signup(data);
+            localStorage.setItem("token", response.access_token);
+            const userData = await authApi.getMe(response.access_token);
+            setUser(userData);
+            toast.success("Account created successfully!");
+        } catch (error: any) {
+            toast.error(error.message || "Signup failed");
+            throw error;
+        }
     };
 
     const logout = () => {
-        // ... existing code ...
+        localStorage.removeItem("token");
+        setUser(null);
+        toast.success("Logged out successfully");
     };
 
     const updateUser = (updates: Partial<User>) => {

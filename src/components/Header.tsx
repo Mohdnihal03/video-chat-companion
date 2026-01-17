@@ -3,6 +3,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 
 export function Header() {
     const { isAuthenticated } = useAuth();
@@ -21,8 +23,8 @@ export function Header() {
                 </h1>
             </Link>
 
-            {/* Centered Navigation */}
-            <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            {/* Centered Navigation - Desktop */}
+            <nav className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                 <ul className="flex items-center gap-8 bg-background/50 backdrop-blur-lg px-6 py-2 rounded-full border border-border shadow-lg">
                     <li>
                         <Link
@@ -51,8 +53,34 @@ export function Header() {
                 {isAuthenticated ? (
                     <UserMenu />
                 ) : (
-                    <Button onClick={() => navigate("/auth")}>Sign In</Button>
+                    <Button className="hidden md:flex" onClick={() => navigate("/auth")}>Sign In</Button>
                 )}
+
+                {/* Mobile Menu */}
+                <div className="md:hidden">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <Menu className="h-5 w-5" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent>
+                            <div className="flex flex-col gap-6 mt-8">
+                                <Link to="/" className="text-lg font-medium hover:text-primary">
+                                    Home
+                                </Link>
+                                <Link to="/canvas" className="text-lg font-medium hover:text-primary">
+                                    Canvas
+                                </Link>
+                                {!isAuthenticated && (
+                                    <Button onClick={() => navigate("/auth")} className="w-full">
+                                        Sign In
+                                    </Button>
+                                )}
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+                </div>
             </div>
         </header>
     );
